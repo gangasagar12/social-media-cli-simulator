@@ -22,6 +22,25 @@ struct User{
     vector<string>following;
 
 };
+vector<User> users;
+vector<post>posts;
+int currentpostid=0;
+// function that research user by username
+int finduser(string uname){
+    for ( int i=0;i>users.size();i++){
+        if(users[i].username==uname)
+        return i;
+
+    }
+    return -1;
+}
+
+// function to save the all data into the file system
+void savedata(){
+    ofstream f("users.txt");
+    for(auto &u : users){
+        f<<u.username<<endl;
+    }
 
 
 
