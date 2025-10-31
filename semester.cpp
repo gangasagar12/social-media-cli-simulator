@@ -39,12 +39,34 @@ int finduser(string uname){
 void savedata(){
     ofstream f("users.txt");
     for(auto &u : users){
-        f<<u.username<<endl;
+        f<<u.username<<"|"<<u.password<<"|"<<u.bio<<"\n";
+        for(auto &p : u.posts){
+            f<<p<<" ";
+        }
+        f<<"\n";
     }
+    f.close();
+
+    ofstream postFile("posts.txt");
+    for (const auto &p : posts) {
+        postFile << p.id << "|" << p.author << "|" << p.content << "|" << p.likes << "\n";
+        for (const auto &c : p.comments) {
+            postFile << c << " ";
+        }
+        postFile << "\n";
+    }
+    postFile.close();
 
 
-
-
+// load all data from the file
+void loaddata(){
+    ifstream f("users.txt");
+    for (auto &u : users){
+        f<<u.username<<"|"<<u.password<<"|"<<u.bio<<"\n";
+        string postsline;
+    }
+    
+}
 // dashboard 
 void dashboard(int uid){
     int choice;
