@@ -65,6 +65,32 @@ void loaddata(){
         f<<u.username<<"|"<<u.password<<"|"<<u.bio<<"\n";
         string postsline;
     }
+    user u;
+    size_t p1 =line.find("|");
+    size_t p2= line.find("|",P1+1);    
+      u.username = line.substr(0, p1);
+        u.password = line.substr(p1+1, p2-p1-1);
+        u.bio = line.substr(p2+1);
+        users.push_back(u);
+    }
+    f.close();
+    ifstream p("posts.txt");
+    while (getline(p, line)) {
+        Post po;
+        size_t p1 = line.find("|");
+        size_t p2 = line.find("|", p1+1);
+        size_t p3 = line.find("|", p2+1);
+          po.id = stoi(line.substr(0, p1));
+        po.author = line.substr(p1+1, p2-p1-1);
+        po.content = line.substr(p2+1, p3-p2-1);
+        po.likes = stoi(line.substr(p3+1));
+        posts.push_back(po);
+        if (po.id >= postCounter) postCounter = po.id + 1;
+
+    }
+    f.close();
+
+
     
 }
 // dashboard 
