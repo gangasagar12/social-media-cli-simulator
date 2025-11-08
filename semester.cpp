@@ -93,6 +93,25 @@ void loaddata(){
 
     
 }
+//  main function  
+void  registeruser(){
+    user u;
+    cout<<" enter the username :";
+    cin>>.username;
+
+    if(finduser(u.username)!=-1){
+        cout<<" username have been already taken . try again.\n";
+        return ;
+        
+    }
+    cout<<" enter the password : ";
+    cin>>u.password;
+    cin.ignore();
+    cout<<"enter your bio : ";
+    getline(cin, u.bio);
+    users.push_back(u);
+    cout<<" registration successful .\n";
+}
 // dashboard 
 void dashboard(int uid){
     int choice;
