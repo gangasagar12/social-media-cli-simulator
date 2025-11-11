@@ -112,6 +112,22 @@ void  registeruser(){
     users.push_back(u);
     cout<<" registration successful .\n";
 }
+// for the user login
+int userlogin(){
+    string name,pass;
+    cout<<"enter your name: ";
+    cin>>name;
+    cout<<" enter  your password;";
+    cin>>pass;
+    int idx=finduser(name);
+    if(idx!=-1 && users[idx].password==pass){
+        cout<<" ;login sucessfully in your accoutn: \n";
+        return idx;
+
+    }
+    cout<<" invilid username or password . please try again.\n";
+    return -1;
+}
 // dashboard 
 void dashboard(int uid){
     int choice;
