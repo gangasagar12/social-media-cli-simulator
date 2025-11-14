@@ -128,6 +128,24 @@ int userlogin(){
     cout<<" invilid username or password . please try again.\n";
     return -1;
 }
+//  function of the ceate post 
+void createpost( int uid ){
+    post p;
+    p.id=postcounter++;
+    p.author=users[uid].username;
+    cin.ignore();
+    cout<<" enter the content of your post: ";
+    getline(cin,p.content);
+    p.likes=0;
+    posts.push_back(p);
+    users[uid].posts.push_back(p.id);
+    cout<<" post created sucessfully.\n";
+    cout<<" post id: "<<p.id<<"\n";
+
+
+
+}
+
 // dashboard 
 void dashboard(int uid){
     int choice;
