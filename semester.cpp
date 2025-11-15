@@ -146,6 +146,31 @@ void createpost( int uid ){
 
 }
 
+// function  for the view posts of the account
+void viewposts(){
+    cout<<" \n News feed: \n";
+    for(auto it =posts.rbegin(); it!=posts.rend(); ++it){
+        cout<<" Post ID: "<<it-> id<<" by "<< it-> author<<"\n";
+        cout<< it-> content <<"\n";
+        cout<<" Likes: "<< it-> likes << " | Comments: "<< it-> comments.size()
+        <<"\n-----------------------\n";
+    }
+}
+// function for the like and commant of the posst
+void likecomment(){
+    int pid;
+    cout<<" enter the post id to like / comment: ";
+    cin>>pid;
+    for( auto &p: posts){
+        if(p.id==pid){
+            int ch;
+            cout<<" 1. like\n";
+            cout<<" 2. comment\n";
+            cout<<" enter your choice: ";
+            cin>>ch;
+        }
+    }
+}
 // dashboard 
 void dashboard(int uid){
     int choice;
