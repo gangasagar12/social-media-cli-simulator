@@ -168,7 +168,45 @@ void likecomment(){
             cout<<" 2. comment\n";
             cout<<" enter your choice: ";
             cin>>ch;
+            if (ch==1){
+                p.likes++;
+                cout<<" likes: ";
+
+            }
+            else{
+                string c;
+                cin.ignore();
+                cout<<" enter your comment : ";
+                getline(cin,c);
+                p.comments.push_back(c);
+                cout<<" comment added sucessfully: \n";
+            }
+            return ;
         }
+
+    }
+    cout<<" post not found : \n";
+}
+void followunfollow(int uid){
+    string uname;
+    cout<<" enter the userame to follow / unfollow: ";
+    cin>>uname;
+    int idx= finduser(uname);
+    if (idx==-1){
+        cout<<" user not found: \n";
+        return ;
+
+    }
+    auto &flist=users[uid].following;
+    if(find(flist.begin(),flist.end(),uname)!=flist.end()){
+        flist.erase(remove(flist.begin(),flist.end(),uname),flist.end());
+        cout<< " you  have been  unfollowed: "<<uname<<"\n";
+
+    }
+    else{
+        flist.push_back(uname);
+        cout<<" you have been followed : "<<uname<<"\n";
+
     }
 }
 // dashboard 
