@@ -209,6 +209,21 @@ void followunfollow(int uid){
 
     }
 }
+//  view profile 
+void viewprofile(int uid){
+    cout<<" PROFILE : ";
+    cout<<" username: "<<users[uid].username<<"\n";
+    cout<<" Bio : ";users[uid].bio<<"\n";
+    cout<< " posts: \n";
+    for (int pid: users[uid].posts){
+        for(auto &p : posts){
+            if(p.id==pid){
+                cout<<" "<<p.id<<": "<<p.content<<"\n";
+                
+            }
+        }
+    }
+}
 // dashboard 
 void dashboard(int uid){
     int choice;
