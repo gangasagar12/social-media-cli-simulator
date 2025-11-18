@@ -224,6 +224,21 @@ void viewprofile(int uid){
         }
     }
 }
+
+// function for the search user 
+void searchuser(){
+    string key;
+
+    cout<<" enter the username to serach: ";
+    cin>>key;
+    cout<<" mathching users: \n";
+    for( auto &u: users){
+        if(u.username.find(key)!=string::npos){
+            cout<<" -"<<u.username<<"\n";
+
+        }
+    }
+}
 // dashboard 
 void dashboard(int uid){
     int choice;
