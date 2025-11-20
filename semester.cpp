@@ -3,6 +3,7 @@
 #include<vector>
 #include<string>
 #include<algorithm>
+#include<conio.h>   // for getch()
 using namespace std;
 
 struct Post {
@@ -17,24 +18,35 @@ struct User{
     string username;
     string password;
     string bio;
-    vector<int>posts;
+    vector<int>posts;   // store post id
     vector<string>followers;
     vector<string>following;
 
 };
 vector<User> users;
-vector<post>posts;
+vector<Post>posts;
 int currentpostid=0;
+// utility functions to split by delimiter string
+vector<string> split(const string &src , const string &delimiter){
+    vector<string> out;
+    string s =src;
+    size_t pos=0;
+     while((pos=s.find(delimiter))!=string::npos){
+        out.push_back(s.substr(0,pos));
+        s.erase(0, pos+ delimiter.length());
+     }
+     out.push_back(s);
+     return out;
+}
 // function that research user by username
-int finduser(string uname){
-    for ( int i=0;i>users.size();i++){
+int finduser(const string &uname){
+    for ( int i=0;i<(int)users.size();i++){
         if(users[i].username==uname)
         return i;
 
     }
     return -1;
 }
-
 // function to save the all data into the file system
 void savedata(){
     ofstream f("users.txt");
