@@ -49,28 +49,41 @@ int finduser(const string &uname){
 }
 // function to save the all data into the file system
 void savedata(){
-    ofstream f("users.txt");
-    for(auto &u : users){
-        f<<u.username<<"|"<<u.password<<"|"<<u.bio<<"\n";
-        for(auto &p : u.posts){
-            f<<p<<" ";
-        }
-        f<<"\n";
+  // users :
+  ofstream f("users.txt";
+if(!f){
+    cerr<< " error opening users.txt for writing: \n";
+    return;
+}
+ for (auto &u : users){
+    f<<u.username<<"|"
+     <<u.password<<"|"
+     <<u.bio<<"|";
+     // save user's post ids
+     for ( int pid: u.posts){
+        f<<pid<<",";
+     }
+     f<<"|";
+     // save followers
+     for ( const string &fol: u.followers){
+        f<<fol<<",";
+     }
+     f<<"|";
+     // save following
+     for ( const string &fol: u.following){
+        f<<fol<<",";
+     }
+     f<<"\n";
+ }
+ f.close();
+ // posts 
+ ofstream p("posts.txt");
+    if(!p){
+        cerr<<" error opening posts.txt for writing \n";
+        return ;
     }
-    f.close();
+}
 
-    ofstream postFile("posts.txt");
-    for (const auto &p : posts) {
-        postFile << p.id << "|" << p.author << "|" << p.content << "|" << p.likes << "\n";
-        for (const auto &c : p.comments) {
-            postFile << c << " ";
-        }
-        postFile << "\n";
-    }
-    postFile.close();
-
-
-// load all data from the file
 void loaddata(){
     ifstream f("users.txt");
     for (auto &u : users){
