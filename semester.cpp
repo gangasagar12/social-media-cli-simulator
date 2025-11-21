@@ -82,6 +82,17 @@ if(!f){
         cerr<<" error opening posts.txt for writing \n";
         return ;
     }
+    for (auto &po : posts){
+        p<<po.id<<"|"
+         <<po.author<<"|"
+         <<po.content<<"|"
+         <<po.likes<<"|";
+        // save comments separated by "~~"
+        for ( const string &c: po.comments)
+            p<<c<<"~~";
+        p<<"\n";
+    }
+    p.close();
 }
 
 void loaddata(){
