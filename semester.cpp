@@ -175,7 +175,32 @@ void loadData() {
         p.close();
     }
 }
-
+// function to password masking  using getch function
+string maskpassword(){
+    string pass;
+    char ch;  // to store each character
+    while(true){
+        ch=getch(); // get charcater without echoing
+        if(ch==13){
+            cout<<"\n";
+            break;
+        }
+        else if(ch==8){
+            if(!pass.empty()){
+                pass.pop_back();
+                cout<<"\b \b"; // erase last char from console
+            }
+        }
+        else if (ch==0 || ch==224){
+            getch(); // ignore special keys
+        }
+        else{
+            pass.push_back(ch);
+            cout<<"*"; // print asterisk for each char
+        }
+    }
+    return pass;
+}
 
 //  main function  
 void  registeruser(){
