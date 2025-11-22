@@ -59,15 +59,18 @@ if(!f){
     f<<u.username<<"|"
      <<u.password<<"|"
      <<u.bio<<"|";
+
      // save user's post ids
      for ( int pid: u.posts){
         f<<pid<<",";
      }
+
      f<<"|";
      // save followers
      for ( const string &fol: u.followers){
         f<<fol<<",";
      }
+
      f<<"|";
      // save following
      for ( const string &fol: u.following){
@@ -206,7 +209,7 @@ string maskpassword(){
 void registerUser() {
     User u;
     cout << "Enter username: ";
-    cin.clear(); // flush newline leftover
+    cin.ignore(numeric_limits<streamsize>::max(), '\n'); // flush newline leftover
     getline(cin, u.username);
     if (u.username.empty()) {
         cout << "Username cannot be empty.\n";
@@ -292,47 +295,76 @@ void viewposts(){
     }
 }
 // function for the like and commant of the posst
-void likecomment(){
+void likeComment() {
+    cout << "Enter Post ID: ";
     int pid;
-    cout<<" enter the post id to like / comment: ";
-    cin>>pid;
-    for( auto &p: posts){
-        if(p.id==pid){
-            int ch;
-            cout<<" 1. like\n";
-            cout<<" 2. comment\n";
-            cout<<" enter your choice: ";
-            cin>>ch;
-            if (ch==1){
-                p.likes++;
-                cout<<" likes: ";
-
-            }
-            else{
-                string c;
-                cin.ignore();
-                cout<<" enter your comment : ";
-                getline(cin,c);
-                p.comments.push_back(c);
-                cout<<" comment added sucessfully: \n";
-            }
-            return ;
-        }
-
+    if (!(cin >> pid)) {
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cout << "Invalid input.\n";
+        return;
     }
-    cout<<" post not found : \n";
+    for (auto &p : posts) {
+        if (p.id == pid) {
+            int ch;
+            cout << "1. Like\n";
+            cout << "2. Comment\n";
+            cout << " Enter choice: ";
+            cin >> ch;
+            if (! ch) {
+                 cin.clear();
+                  cin.ignore();
+                   cout << "Invalid.\n"; 
+                   return; 
+                }
+            if (ch == 1) {
+                p.likes++;
+                savedata();
+                cout << "Liked!\n";
+            } else if (ch == 2) {
+                cin.ignore(); // clear input buffer   
+                string c;
+                cout << "Enter comment: ";
+                getline(cin, c);
+                if (!c.empty()) {
+                    p.comments.push_back(c);
+                    savedata();
+                    cout << "Comment added!\n";
+                } else {
+                    cout << "Comment empty. Aborted.\n";
+                }
+            } else {
+                cout << "Invalid choice.\n";
+            }
+            return;
+        }
+    }
+    cout << "Post not found!\n";
 }
+
 void followunfollow(int uid){
     string uname;
     cout<<" enter the userame to follow / unfollow: ";
     cin>>uname;
+    cin.clear();
+    cin.ignore(); // clear input buffer  
+    if(uname.empty()){
+        cout<<" invalid username. \n";
+        return ;
+    }
     int idx= finduser(uname);
     if (idx==-1){
         cout<<" user not found: \n";
         return ;
 
     }
+    if(uid==idx){
+        cout<<" you cannot follow / unfollow yourself. \n";
+        return ;
+    }
     auto &flist=users[uid].following;
+    auto &targetfollowers= users[idx].followers;
+    auto it = find(targetfollowers.begin(), targetfollowers.end(), users[uid].username);
     if(find(flist.begin(),flist.end(),uname)!=flist.end()){
         flist.erase(remove(flist.begin(),flist.end(),uname),flist.end());
         cout<< " you  have been  unfollowed: "<<uname<<"\n";
@@ -340,6 +372,8 @@ void followunfollow(int uid){
     }
     else{
         flist.push_back(uname);
+         targetfollowers.push_back(users[uid].username);
+         savedata();
         cout<<" you have been followed : "<<uname<<"\n";
 
     }
@@ -349,7 +383,12 @@ void viewprofile(int uid){
     cout<<" PROFILE : ";
     cout<<" username: "<<users[uid].username<<"\n";
     cout<<" Bio : "<<users[uid].bio<<"\n";
+    cout<<" Followers: "<< users[uid].followers.size()<<" | Following: "<< users[uid].following.size()<<"\n";
     cout<< " posts: \n";
+    if (users[uid].posts.empty()){
+        cout<<" no posts available. \n";
+        return ;
+    }
     for (int pid: users[uid].posts){
         for(auto &p : posts){
             if(p.id==pid){
@@ -367,6 +406,10 @@ void searchuser(){
     cout<<" enter the username to serach: ";
     cin>>key;
     cout<<" mathching users: \n";
+    if(key.empty()){
+        cout<<" invalid username. \n";
+        return ;
+    }
     for( auto &u: users){
         if(u.username.find(key)!=string::npos){
             cout<<" -"<<u.username<<"\n";
@@ -390,7 +433,7 @@ void dashboard(int uid){
             break;
             case 2: viewposts();
             break;
-            case 3: likecomment();
+            case 3: likeComment();
             break;
             case 4: followunfollow(uid);
             break;
@@ -414,7 +457,7 @@ int main(){
         cout<<" enter your choice : ";
         cin >> choice;
         if(choice==1){
-            registeruser();
+            registerUser();
 
         }
         else if (choice==2){
