@@ -25,7 +25,7 @@ struct User{
 };
 vector<User> users;
 vector<Post>posts;
-int currentpostid=0;
+int postCounter=1;
 // utility functions to split by delimiter string
 vector<string> split(const string &src , const string &delimiter){
     vector<string> out;
@@ -50,7 +50,7 @@ int finduser(const string &uname){
 // function to save the all data into the file system
 void savedata(){
   // users :
-  ofstream f("users.txt";
+  ofstream f("users.txt");
 if(!f){
     cerr<< " error opening users.txt for writing: \n";
     return;
@@ -94,46 +94,94 @@ if(!f){
     }
     p.close();
 }
+// load all data fron the files
 
-void loaddata(){
+void loadData() {
+    users.clear();
+    posts.clear();
+    postCounter = 1;
+
     ifstream f("users.txt");
-    for (auto &u : users){
-        f<<u.username<<"|"<<u.password<<"|"<<u.bio<<"\n";
-        string postsline;
+    if (f) {
+        string line;
+        while (getline(f, line)) {
+            if (line.empty()) continue;
+            vector<string> parts = split(line, "|");
+            // Expect 6 fields: username, password, bio, posts, followers, following
+            while (parts.size() < 6) parts.push_back("");
+            User u;
+            u.username = parts[0];
+            u.password = parts[1];
+            u.bio      = parts[2];
+
+            // posts
+            if (!parts[3].empty()) {
+                vector<string> pids = split(parts[3], ",");
+                for (auto &x : pids)
+                    if (!x.empty())
+                        u.posts.push_back(stoi(x));
+            }
+
+            // followers
+            if (!parts[4].empty()) {
+                vector<string> fol = split(parts[4], ",");
+                for (auto &x : fol)
+                    if (!x.empty())
+                        u.followers.push_back(x);
+            }
+
+            // following
+            if (!parts[5].empty()) {
+                vector<string> fol = split(parts[5], ",");
+                for (auto &x : fol)
+                    if (!x.empty())
+                        u.following.push_back(x);
+            }
+
+            users.push_back(u);
+        }
+        f.close();
     }
-    user u;
-    size_t p1 =line.find("|");
-    size_t p2= line.find("|",P1+1);    
-      u.username = line.substr(0, p1);
-        u.password = line.substr(p1+1, p2-p1-1);
-        u.bio = line.substr(p2+1);
-        users.push_back(u);
-    }
-    f.close();
+
     ifstream p("posts.txt");
-    while (getline(p, line)) {
-        Post po;
-        size_t p1 = line.find("|");
-        size_t p2 = line.find("|", p1+1);
-        size_t p3 = line.find("|", p2+1);
-          po.id = stoi(line.substr(0, p1));
-        po.author = line.substr(p1+1, p2-p1-1);
-        po.content = line.substr(p2+1, p3-p2-1);
-        po.likes = stoi(line.substr(p3+1));
-        posts.push_back(po);
-        if (po.id >= postCounter) postCounter = po.id + 1;
+    if (p) {
+        string line;
+        while (getline(p, line)) {
+            if (line.empty()) continue;
+            vector<string> parts = split(line, "|");
+            // Expect 5 fields: id, author, content, likes, commentsCombined
+            while (parts.size() < 5) parts.push_back("");
+            Post po;
+            try {
+                po.id = stoi(parts[0]);
+            } catch (...) { continue; }
+            po.author  = parts[1];
+            po.content = parts[2];
+            try {
+                po.likes = stoi(parts[3]);
+            } catch (...) { po.likes = 0; }
 
+            // comments separated by "~~"
+            if (!parts[4].empty()) {
+                vector<string> cms = split(parts[4], "~~");
+                for (auto &c : cms)
+                    if (!c.empty())
+                        po.comments.push_back(c);
+            }
+
+            posts.push_back(po);
+            if (po.id >= postCounter) postCounter = po.id + 1;
+        }
+        p.close();
     }
-    f.close();
-
-
-    
 }
+
+
 //  main function  
 void  registeruser(){
-    user u;
+    User u;
     cout<<" enter the username :";
-    cin>>.username;
+    cin>>u.username;
 
     if(finduser(u.username)!=-1){
         cout<<" username have been already taken . try again.\n";
@@ -166,8 +214,8 @@ int userlogin(){
 }
 //  function of the ceate post 
 void createpost( int uid ){
-    post p;
-    p.id=postcounter++;
+    Post p;
+    p.id=postCounter++;
     p.author=users[uid].username;
     cin.ignore();
     cout<<" enter the content of your post: ";
@@ -180,7 +228,7 @@ void createpost( int uid ){
 
 
 
-}
+}\
 
 // function  for the view posts of the account
 void viewposts(){
@@ -249,7 +297,7 @@ void followunfollow(int uid){
 void viewprofile(int uid){
     cout<<" PROFILE : ";
     cout<<" username: "<<users[uid].username<<"\n";
-    cout<<" Bio : ";users[uid].bio<<"\n";
+    cout<<" Bio : "<<users[uid].bio<<"\n";
     cout<< " posts: \n";
     for (int pid: users[uid].posts){
         for(auto &p : posts){
@@ -287,13 +335,13 @@ void dashboard(int uid){
         cout<<" enter  your choice: ";
         cin >> choice;
         switch(choice){
-            case 1: create a post(uid):
+            case 1: createpost(uid);
             break;
-            case 2: view posts(uid);
+            case 2: viewposts();
             break;
-            case 3: like/comment();
+            case 3: likecomment();
             break;
-            case 4: follow/ unfollow();
+            case 4: followunfollow(uid);
             break;
             default: cout<<" invalid choice";
             break;
@@ -305,8 +353,9 @@ void dashboard(int uid){
 }
 //  body part of the main function
 int main(){
+    loadData();
     int choice;
-    do{
+    do {
         cout<<" \n ===== welcome to social media projects ====\n";
         cout<<" \n 1. register\n";
         cout<<" \n 2. login \n";
@@ -318,8 +367,8 @@ int main(){
 
         }
         else if (choice==2){
-            int uid== Userlogin();
-            if(uid=-1){
+            int uid= userlogin();
+            if(uid!=-1){
                 dashboard(uid);
                 
             }
@@ -328,8 +377,10 @@ int main(){
                 cout<<" exiting the program tra again ans again.\n";
                 exit(0);
             }
-            while(choice!=3);
-            return 0;
+            else{
+                cout<<" invilid choice please try againn.\n";
+            }
         }
-    }
+    } while (choice !=3);
+    return 0;
 }
