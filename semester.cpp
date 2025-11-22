@@ -203,38 +203,48 @@ string maskpassword(){
 }
 
 //  main function  
-void  registeruser(){
+void registerUser() {
     User u;
-    cout<<" enter the username :";
-    cin>>u.username;
-
-    if(finduser(u.username)!=-1){
-        cout<<" username have been already taken . try again.\n";
-        return ;
-        
+    cout << "Enter username: ";
+    cin.clear(); // flush newline leftover
+    getline(cin, u.username);
+    if (u.username.empty()) {
+        cout << "Username cannot be empty.\n";
+        return;
     }
-    cout<<" enter the password : ";
-    cin>>u.password;
-    cin.ignore();
-    cout<<"enter your bio : ";
+    if (finduser(u.username) != -1) {
+        cout << "Username already exists!\n";
+        return;
+    }
+
+    cout << "Enter password: ";
+    u.password = maskpassword();
+
+    cout << "Enter bio: ";
     getline(cin, u.bio);
+
     users.push_back(u);
-    cout<<" registration successful .\n";
+    savedata(); // persist immediately
+    cout << "Registration successful!\n";
 }
 // for the user login
 int userlogin(){
     string name,pass;
     cout<<"enter your name: ";
+    cin.clear(); // clear any previous error flags
     cin>>name;
     cout<<" enter  your password;";
     cin>>pass;
-    int idx=finduser(name);
-    if(idx!=-1 && users[idx].password==pass){
-        cout<<" ;login sucessfully in your accoutn: \n";
-        return idx;
-
+ 
+    pass=maskpassword();  // get masked pasword
+    // search all users for username and password match
+    for ( int i=0;i<users.size();i++){
+        if(users[i].username==name && users[i].password==pass){
+            cout<<" login successful. \n";
+            return i;
+        }
     }
-    cout<<" invilid username or password . please try again.\n";
+    cout<<" invalid username or password. please try again.\n";
     return -1;
 }
 //  function of the ceate post 
@@ -242,27 +252,43 @@ void createpost( int uid ){
     Post p;
     p.id=postCounter++;
     p.author=users[uid].username;
-    cin.ignore();
+    cin.clear(); // clear input buffer
+    cin.ignore(); // flush newline leftover
     cout<<" enter the content of your post: ";
     getline(cin,p.content);
     p.likes=0;
+    if (p.content.empty()){
+        cout<<" post content cannot be empty. \n";
+        return ;
+    }
     posts.push_back(p);
     users[uid].posts.push_back(p.id);
+    savedata(); // for the saving of data
     cout<<" post created sucessfully.\n";
     cout<<" post id: "<<p.id<<"\n";
 
 
 
-}\
+}
 
 // function  for the view posts of the account
 void viewposts(){
     cout<<" \n News feed: \n";
+    if(posts.empty()){
+        cout<<" no posts available. \n";
+        return ;
+    }
     for(auto it =posts.rbegin(); it!=posts.rend(); ++it){
         cout<<" Post ID: "<<it-> id<<" by "<< it-> author<<"\n";
         cout<< it-> content <<"\n";
         cout<<" Likes: "<< it-> likes << " | Comments: "<< it-> comments.size()
         <<"\n-----------------------\n";
+        if(!it->comments.empty()){
+            cout<<" Comments: \n";
+            for ( const string &c: it-> comments){
+                cout<<" - "<< c <<"\n";
+            }
+        }
     }
 }
 // function for the like and commant of the posst
