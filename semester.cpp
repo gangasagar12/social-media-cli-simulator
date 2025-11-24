@@ -54,10 +54,53 @@ class Post {
     string author;
     string content;
     int likes;
-    vector<string> comments;
+    vector<string> comments; 
+    public:
+    Post(){
+        id=0;
+        likes=0;
+    }
+    Post(int i, string a, string c){
+        id=i;
+        author=a;
+        content=c;
+        likes=0;
+    }
+    // getters
+    int getid() const { 
+        return id; 
+    }
+    string getauthor() const { 
+        return author; 
+    }
+    string getcontent() const { 
+        return content; 
+    }
+    int getlikes() const {
+        return likes;
+    }
+    const vector<string>& getcomments() const {
+        return comments;
+    }
+    // operations
+    void setcontent(const string &c){
+        content=c;
+    }
+    void addlike(){
+        likes++;
+    }
+    void addcomment(const string &c){
+        comments.push_back(c);
+    }
+    string serialize() const {
+        // id|author|content|likes|comment1~~comment2~~
+        string out = to_string(id) + "|" + author + "|" + content + "|" + to_string(likes) + "|";
+        for (const auto &c : comments) out += c + "~~";
+        return out;
+    }
 };
 
-struct User{
+class User{
     string username;
     string password;
     string bio;
