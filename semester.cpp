@@ -4,9 +4,52 @@
 #include<string>
 #include<algorithm>
 #include<conio.h>   // for getch()
+#include<sstream> // for the string stream
+#include<limits> // for numeric_limits
 using namespace std;
 
-struct Post {
+vector<string> split(const string &s, const string &delim) {
+    vector<string> out;
+    if (s.empty()) 
+    { out.push_back(""); 
+        return out; 
+    }
+    size_t start = 0, pos;
+    while ((pos = s.find(delim, start)) != string::npos) {  // find next occurrence
+        out.push_back(s.substr(start, pos - start));  // extract substring
+        start = pos + delim.size();
+    }
+    out.push_back(s.substr(start)); // add remaining part
+    return out;
+}
+class FileHandler {
+public:
+    static void saveLines(const string &filename, const vector<string> &lines) {
+        ofstream fout(filename);
+        if (!fout) {
+            cerr << "Error saving file: " << filename << "\n";
+            return;
+        }
+        for (const auto &ln : lines) fout << ln << "\n";
+        fout.close();
+    }
+
+    static vector<string> loadLines(const string &filename) {
+        vector<string> lines;
+        ifstream fin(filename);
+        if (!fin) return lines;
+        string line;
+        while (getline(fin, line)) {
+            if (!line.empty()) lines.push_back(line);
+        }
+        fin.close();
+        return lines;
+    }
+};
+
+
+class Post {
+    private: 
     int id;
     string author;
     string content;
