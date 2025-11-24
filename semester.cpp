@@ -98,17 +98,121 @@ class Post {
         for (const auto &c : comments) out += c + "~~";
         return out;
     }
+
+    
+    static Post parse(const string &line) {
+         Post p;
+        // Expect 5 parts separated by '|'
+        vector<string> parts = split(line, "|");
+        while (parts.size() < 5) 
+        parts.push_back("");
+        try { p.id = stoi(parts[0]);
+        } 
+        catch(...) 
+        { p.id = 0;
+         }
+        p.author = parts[1];
+        p.content = parts[2];
+        try { p.likes = stoi(parts[3]); }
+         catch(...) 
+         { p.likes = 0; }
+        if (!parts[4].empty()) {
+            vector<string> cms = split(parts[4], "~~");
+            for (auto &c : cms) {
+                if (!c.empty()) p.comments.push_back(c);
+            }
+        }
+        return p;
+    }
+    void printSummary() const {  
+        cout << "Post ID: " << id << " | Author: " << author << " | Likes: " << likes << " | Comments: " << comments.size() << "\n";
+    }
+    void printFull() const {
+        cout << "Post ID: " << id << " | Author: " << author << "\n";
+        cout << content << "\n";
+        cout << "Likes: " << likes << " | Comments: " << comments.size() << "\n";
+        if (!comments.empty()) {
+            cout << "Comments:\n";
+            for (const auto &c : comments) cout << " - " << c << "\n";
+        }
+    }
+private:  
+    static string escapePipes(const string &s) {
+        string out;
+        for (char ch: s) {
+            if (ch == '|') out += "&#124;";
+            else out += ch;
+        }
+        return out;
+    }
+    static string escape(const string &s) {
+        string out=s;
+        size_t pos=0;
+        for (char ch: s) {
+            if (ch == '~') out += "&#126;";
+            else out += ch;
+        }
+        return out;
+    }
+
 };
 
-class User{
+class person{
+    protected:
+
     string username;
-    string password;
     string bio;
-    vector<int>posts;   // store post id
-    vector<string>followers;
-    vector<string>following;
-
+ public:
+      person(){}  // default constructor
+      person(const string &uname, const string &b){
+        username=uname;
+        bio=b;
+      }
+      virtual ~person(){} // virtual destructor
+    virtual void showProfile(){
+        cout<<" username: "<< username <<"\n";
+        cout<<" bio: "<< bio <<"\n";
+    }
+    string getusername() const {
+        return username;
+    }
+    string getbio() const { 
+        return bio;
+    }
 };
+
+class user: public person{
+    private:
+    string password;
+    vector<int> posts; // store post IDs
+    vector<string> followers;
+    vector<string> following;
+public:
+    user(){}
+    user(const string &uname, const string &pass, const string &b)
+    : person(uname,b), password(pass) {}
+    ~user(){}
+
+    // getters
+    bool checkpassword(const string &p) const {
+        return password==p;
+    }
+    const vector<int>& getposts() const {
+        return posts;
+    }
+    const vector<string>& getfollowers() const {
+        return followers;
+    }
+    const vector<string>& getfollowing() const {
+        return following;
+    }
+};
+
+
+
+
+
+
 vector<User> users;
 vector<Post>posts;
 int postCounter=1;
