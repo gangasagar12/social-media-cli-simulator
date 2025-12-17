@@ -4,6 +4,7 @@
 #include <string>
 #include <algorithm>
 #include <limits>
+#include <ctime>
 
 #ifdef _WIN32
 #include <conio.h>
@@ -26,10 +27,11 @@ void clearScreen() {
 // ===== Utility: String Split =====
 vector<string> split(const string &s, const string &delim) {
     vector<string> out;
-    if (s.empty())
-     { out.push_back(""); 
+    if (s.empty()) {
+        out.push_back("");
         return out;
-     }
+    }
+
     size_t start = 0, pos;
     while ((pos = s.find(delim, start)) != string::npos) {
         out.push_back(s.substr(start, pos - start));
@@ -37,6 +39,14 @@ vector<string> split(const string &s, const string &delim) {
     }
     out.push_back(s.substr(start));
     return out;
+}
+
+// ===== Utility: Current Timestamp =====
+string getCurrentTimestamp() {
+    time_t now = time(nullptr);
+    char buf[32];
+    strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", localtime(&now));
+    return string(buf);
 }
 
 // ===== File Handler =====
@@ -53,11 +63,10 @@ public:
     static vector<string> loadLines(const string &filename) {
         vector<string> lines;
         ifstream fin(filename);
-        if (!fin) 
-        return lines;
+        if (!fin) return lines;
         string line;
-        while (getline(fin, line)) 
-        if (!line.empty()) lines.push_back(line);
+        while (getline(fin, line))
+            if (!line.empty()) lines.push_back(line);
         return lines;
     }
 };
@@ -68,49 +77,86 @@ class Post {
     string author;
     string content;
     int likes;
-    vector<string> comments;
+    vector<pair<string, string>> comments; // {timestamp, comment}
+    string created_ts;
+    string last_edit_ts;
 public:
     Post() : id(0), likes(0) {}
-    Post(int i, const string &a, const string &c) : id(i), author(a), content(c), likes(0) {}
+    Post(int i, const string &a, const string &c)
+        : id(i), author(a), content(c), likes(0) {
+        created_ts = getCurrentTimestamp();
+        last_edit_ts = created_ts;
+    }
+
     int getId() const { return id; }
+    
     string getAuthor() const { return author; }
     string getContent() const { return content; }
     int getLikes() const { return likes; }
-    const vector<string> &getComments() const { return comments; }
+    const vector<pair<string, string>> &getComments() const { return comments; }
+    string getCreatedTS() const { return created_ts; }
+    string getLastEditTS() const { return last_edit_ts; }
 
-    void setContent(const string &c) { content = c; }
+    void setContent(const string &c) { 
+        content = c; 
+        last_edit_ts = getCurrentTimestamp();
+    }
     void addLike() { ++likes; }
-    void addComment(const string &c) { comments.push_back(c); }
+    void addComment(const string &c) { 
+        comments.push_back({getCurrentTimestamp(), c}); 
+    }
 
     string serialize() const {
-        string out = to_string(id) + "|" + escapePipes(author) + "|" + escapePipes(content) + "|" + to_string(likes) + "|";
-        for (const auto &c : comments) out += escapePipes(c) + "~~";
+        string out = to_string(id) + "|" +
+                escapePipes(author) + "|" +
+                escapePipes(content) + "|" +
+                to_string(likes) + "|" +
+                escapePipes(created_ts) + "|" +
+                escapePipes(last_edit_ts) + "|";
+        for (const auto &comment : comments) {
+            out += escapePipes(comment.first) + "~!~" + escapePipes(comment.second) + "~~";
+        }
         return out;
     }
+
     static Post parse(const string &line) {
         Post p;
         auto parts = split(line, "|");
-        while (parts.size() < 5) parts.push_back("");
+        while (parts.size() < 7) parts.push_back("");
         try { p.id = stoi(parts[0]); } catch (...) { p.id = 0; }
         p.author = unescapePipes(parts[1]);
         p.content = unescapePipes(parts[2]);
         try { p.likes = stoi(parts[3]); } catch (...) { p.likes = 0; }
-        if (!parts[4].empty()) {
-            for (auto &c : split(parts[4], "~~"))
-                if (!c.empty()) p.comments.push_back(unescapePipes(c));
+        p.created_ts = unescapePipes(parts[4]);
+        p.last_edit_ts = unescapePipes(parts[5]);
+        if (!parts[6].empty()) {
+            vector<string> cvec = split(parts[6], "~~");
+            for (const auto &c : cvec) {
+                if (c.empty()) continue;
+                auto tp = split(c, "~!~");
+                if (tp.size() == 2)
+                    p.comments.push_back({unescapePipes(tp[0]), unescapePipes(tp[1])});
+                else if (tp.size() == 1)
+                    p.comments.push_back({"", unescapePipes(tp[0])});
+            }
         }
         return p;
     }
+
     void printSummary() const {
-        cout << "Post ID: " << id << " | Author: " << author << " | Likes: " << likes << " | Comments: " << comments.size() << "\n";
+        cout << "Post ID: " << id << " | Author: " << author << " | Likes: " << likes
+             << " | Comments: " << comments.size()
+             << " | Created: " << created_ts << " | Last edit: " << last_edit_ts << "\n";
     }
     void printFull() const {
-        cout << "Post ID: " << id << " | Author: " << author << "\n";
-        cout << content << "\n";
-        cout << "Likes: " << likes << " | Comments: " << comments.size() << "\n";
+        cout << "Post ID: " << id << " | Author: " << author
+             << "\n" << content << "\n";
+        cout << "Likes: " << likes << " | Comments: " << comments.size() 
+             << "\nCreated: " << created_ts << " | Last edit: " << last_edit_ts << "\n";
         if (!comments.empty()) {
             cout << "Comments:\n";
-            for (const auto &c : comments) cout << " - " << c << "\n";
+            for (const auto &c : comments)
+                cout << " [" << c.first << "] - " << c.second << "\n";
         }
     }
 private:
@@ -150,27 +196,28 @@ class User : public Person {
     string password;
     vector<int> posts;
     vector<string> followers, following;
+    string created_ts, last_login_ts;
 public:
     User() = default;
-    User(const string &uname, const string &pass, const string &b) : Person(uname, b), password(pass) {}
+    User(const string &uname, const string &pass, const string &b) : Person(uname, b), password(pass) {
+        created_ts = getCurrentTimestamp();
+        last_login_ts = "";
+    }
 
     bool checkPassword(const string &p) const { return password == p; }
     const vector<int> &getPosts() const { return posts; }
     const vector<string> &getFollowers() const { return followers; }
     const vector<string> &getFollowing() const { return following; }
+    string getCreatedTS() const { return created_ts; }
+    string getLastLoginTS() const { return last_login_ts; }
 
-    void addPostId(int pid) 
-    { posts.push_back(pid); }
-    void removePostId(int pid)
-     { posts.erase(remove(posts.begin(), posts.end(), pid), posts.end()); }
-    void addFollower(const string &f) 
-    { if (find(followers.begin(), followers.end(), f) == followers.end()) followers.push_back(f); }
-    void removeFollower(const string &f) 
-    { followers.erase(remove(followers.begin(), followers.end(), f), followers.end()); }
-    void addFollowing(const string &f)
-     { if (find(following.begin(), following.end(), f) == following.end()) following.push_back(f); }
-    void removeFollowing(const string &f)
-     { following.erase(remove(following.begin(), following.end(), f), following.end()); }
+    void setLastLoginNow() { last_login_ts = getCurrentTimestamp(); }
+    void addPostId(int pid) { posts.push_back(pid); }
+    void removePostId(int pid) { posts.erase(remove(posts.begin(), posts.end(), pid), posts.end()); }
+    void addFollower(const string &f) { if (find(followers.begin(), followers.end(), f) == followers.end()) followers.push_back(f); }
+    void removeFollower(const string &f) { followers.erase(remove(followers.begin(), followers.end(), f), followers.end()); }
+    void addFollowing(const string &f) { if (find(following.begin(), following.end(), f) == following.end()) following.push_back(f); }
+    void removeFollowing(const string &f) { following.erase(remove(following.begin(), following.end(), f), following.end()); }
     void setBio(const string &b) { bio = b; }
 
     void showProfile() const override {
@@ -178,6 +225,9 @@ public:
         cout << " bio: " << bio << "\n";
         cout << " followers: " << followers.size() << " | following: " << following.size() << "\n";
         cout << " posts: " << posts.size() << "\n";
+        cout << " joined: " << created_ts << "\n";
+        if (!last_login_ts.empty())
+            cout << " last login: " << last_login_ts << "\n";
     }
 
     string serialize() const {
@@ -187,11 +237,12 @@ public:
         for (const auto &f : followers) out += escapePipes(f) + ",";
         out += "|";
         for (const auto &f : following) out += escapePipes(f) + ",";
+        out += "|" + escapePipes(created_ts) + "|" + escapePipes(last_login_ts);
         return out;
     }
     static User parse(const string &line) {
         auto parts = split(line, "|");
-        while (parts.size() < 6) parts.push_back("");
+        while (parts.size() < 8) parts.push_back("");
         User u;
         u.username = unescapePipes(parts[0]);
         u.password = unescapePipes(parts[1]);
@@ -208,6 +259,8 @@ public:
             for (const auto &x : split(parts[5], ","))
                 if (!x.empty()) u.following.push_back(unescapePipes(x));
         }
+        u.created_ts = unescapePipes(parts[6]);
+        u.last_login_ts = unescapePipes(parts[7]);
         return u;
     }
 private:
@@ -246,8 +299,8 @@ public:
     }
     void loadAll() {
         users.clear(); posts.clear(); postCounter = 1;
-        for (auto &ln : FileHandler::loadLines(USERS_FILE)) users.push_back(User::parse(ln));
-        for (auto &ln : FileHandler::loadLines(POSTS_FILE)) {
+        for (const auto &ln : FileHandler::loadLines(USERS_FILE)) users.push_back(User::parse(ln));
+        for (const auto &ln : FileHandler::loadLines(POSTS_FILE)) {
             Post p = Post::parse(ln);
             posts.push_back(p);
             if (p.getId() >= postCounter) postCounter = p.getId() + 1;
@@ -278,6 +331,8 @@ public:
         int idx = findUserIndex(uname);
         if (idx == -1) { cout << "Username not found.\n"; return -1; }
         if (!users[idx].checkPassword(pass)) { cout << "Wrong password.\n"; return -1; }
+        users[idx].setLastLoginNow();
+        saveAll();
         cout << "Login successful. Welcome, " << uname << "!\n";
         cout << "Press Enter to continue...";
         cin.ignore(numeric_limits<streamsize>::max(), '\n'); cin.get();
@@ -303,7 +358,9 @@ public:
         int pid;
         if (!(cin >> pid)) { cin.clear(); cin.ignore(numeric_limits<streamsize>::max(), '\n'); cout << "Invalid input.\n"; return; }
         int pidx = findPostIndex(pid);
-        if (pidx == -1) { cout << "Post not found.\n"; return; }
+        if (pidx == -1)
+         { cout << "Post not found.\n"; 
+            return; }
         if (posts[pidx].getAuthor() != users[uid].getUsername()) { cout << "You can't edit other's post.\n"; return; }
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
         cout << "Current content:\n" << posts[pidx].getContent() << "\n";
@@ -504,8 +561,10 @@ public:
         int ch;
         while ((ch = _getch()), ch != 13) {
             if (ch == 8 || ch == 127) {
-                if (!pass.empty()) { pass.pop_back(); cout << "\b \b"; }
-            } else if (ch == 0 || ch == 224) { _getch(); }
+                if (!pass.empty())
+                 { pass.pop_back(); cout << "\b \b"; }
+            } 
+            else if (ch == 0 || ch == 224) { _getch(); }
             else { pass.push_back((char)ch); cout << '*'; }
         }
         cout << "\n";
@@ -532,9 +591,9 @@ int main() {
     int choice;
     do {
         cout << "\n==== Welcome to SocialShell ====\n";
-      cout<<"1.Regiter user: \n";
-      cout<<" 2. login users: \n";
-      cout<<"0. exit user: \n";
+        cout<<"1.Register user: \n";
+        cout<<"2. Login user: \n";
+        cout<<"3. Exit: \n";
         cout << "Enter choice: ";
         if (!(cin >> choice)) {
             cin.clear();
