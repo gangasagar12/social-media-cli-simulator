@@ -7,11 +7,10 @@
 #include <ctime>
 #include <functional>   //  for the hash password
 
-
 //  platform - specific includes for password masking
 
 #ifdef _WIN32
-#include <conio.h>   
+#include <conio.h>
 #else
 #include <termios.h>
 #include <unistd.h>
@@ -24,7 +23,7 @@ string hashPassword(const string &password) {  // password hashing function
     return to_string(hasher(password)); // compute hash and convert to string
 }
 
-void clearScreen() {   // function for clear screen 
+void clearScreen() {   // function for clear screen
 #ifdef _WIN32
     system("cls");
 #else
@@ -56,7 +55,7 @@ string getCurrentTimestamp() {  // for the function current date time
     time_t now = time(nullptr);
     char buf[32];   // before the store formatted time
     strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", localtime(&now));
-    return string(buf);   
+    return string(buf);
 }
 
 
@@ -74,9 +73,9 @@ public:
     static vector<string> loadLines(const string &filename) {   // load lines from file into vector
         vector<string> lines;  // vector to store lines
         ifstream fin(filename);  // open file for reading
-        if (!fin) 
-        return lines;   // return empty vector if file doesnt exits
-       
+        if (!fin)
+            return lines;   // return empty vector if file doesnt exits
+
         string line;  // read file line by line
         while (getline(fin, line))
             if (!line.empty()) lines.push_back(line);  // skip empty lines
@@ -103,67 +102,72 @@ public:
     }
 //  accessosrs
     int getId() const {
-         return id; 
-        }
-    
-    string getAuthor() const {
-         return author; 
-        }
-    string getContent() const {
-         return content; 
-        }
-    int getLikes() const {
-         return likes; 
-        }
-    
-    const vector<pair<string, string>> &getComments() const {
-         return comments; 
-        }
-    string getCreatedTS() const {
-         return created_ts; 
-        }
+        return id;
+    }
 
-    void setContent(const string &c) { 
-        content = c; 
+    string getAuthor() const {
+        return author;
+    }
+    string getContent() const {
+        return content;
+    }
+    int getLikes() const {
+        return likes;
+    }
+
+    const vector<pair<string, string>> &getComments() const {
+        return comments;
+    }
+    string getCreatedTS() const {
+        return created_ts;
+    }
+
+    void setContent(const string &c) {
+        content = c;
         last_edit_ts = getCurrentTimestamp();  // update edit timestap
     }
     void addLike()
-         { ++likes;   //  increment like count
-             }
+    { ++likes;   //  increment like count
+    }
 
-    void addComment(const string &c) { 
+    void addComment(const string &c) {
         comments.push_back({getCurrentTimestamp(), c});   // add comment with timestamp
     }
 
     string serialize() const {  // convert post object to string for file storage
-        string out = to_string(id) + "|" +
-                escapePipes(author) + "|" +
-                escapePipes(content) + "|" +
-                to_string(likes) + "|" +
-                escapePipes(created_ts) + "|" +
-                escapePipes(last_edit_ts) + "|";
-
-        for (const auto &comment : comments) {
-            out += escapePipes(comment.first) + "~!~" + escapePipes(comment.second) + "~~";
+        string out = to_string(id) + "," +
+                escapePipes(author) + "," +
+                escapePipes(content) + "," +
+                to_string(likes) + "," +
+                escapePipes(created_ts) + "," +
+                escapePipes(last_edit_ts) + ",";
+                
+        string comments_str;
+        for(size_t i=0;i<comments.size();i++){
+            if(i>0) comments_str+="~~";
+            comments_str+=comments[i].first+"|"+comments[i].second;
         }
+        out += escapePipes(comments_str);
         return out;
     }
 
-    static Post parse(const string &line) {  
+    static Post parse(const string &line) {
         Post p;         // create default post object
         auto parts = split(line, "|");   // split by pipe delimeter
         while (parts.size() < 7) parts.push_back("");   // ensure at least 7 parts
         try {
-             p.id = stoi(parts[0]); } 
-             catch (...) 
-             { p.id = 0; }
+            p.id = stoi(parts[0]);
+        }
+        catch (...)
+        { p.id = 0; }
 
         p.author = unescapePipes(parts[1]);
         p.content = unescapePipes(parts[2]);
         try {
-             p.likes = stoi(parts[3]); } 
-             catch (...) 
-             { p.likes = 0; }
+            p.likes = stoi(parts[3]);
+        }
+        catch (...)
+        { p.likes = 0; }
         p.created_ts = unescapePipes(parts[4]);
         p.last_edit_ts = unescapePipes(parts[5]);
         if (!parts[6].empty()) {
@@ -183,23 +187,33 @@ public:
         return p;
     }
 
+    // New formatting: mimic social media style (author, time, likes, comments).
+    // printSummary shows a compact social-media-like card
     void printSummary() const {  // display post summary
-        cout << "Post ID: " << id << " | Author: " << author << " | Likes: " << likes
-             << " | Comments: " << comments.size()
-             << " | Created: " << created_ts << " | Last edit: " << last_edit_ts << "\n";
+        const size_t maxPreview = 140;
+        cout << "------------------------------------------------------------\n";
+        cout << author << "  •  " << created_ts << "\n\n";
+        cout << preview(content, maxPreview) << "\n\n";
+        cout << "♥ " << likes << "   " << comments.size() << "    Post ID: " << id << "\n";
+        cout << "------------------------------------------------------------\n";
     }
 
+    // printFull shows full post content and comments with timestamps
     void printFull() const {   // function for display full post details with comments
-        cout << "Post ID: " << id << " | Author: " << author
-             << "\n" << content << "\n";
-        cout << "Likes: " << likes << " | Comments: " << comments.size() 
-             << "\nCreated: " << created_ts << " | Last edit: " << last_edit_ts << "\n";
-
+        cout << "============================================================\n";
+        cout << author << "  •  " << created_ts << "\n\n";
+        cout << content << "\n\n";
+        cout << "Likes: " << likes << "    Comments: " << comments.size()
+             << "\nCreated: " << created_ts;
+        if (!last_edit_ts.empty())
+            cout << "    Edited: " << last_edit_ts;
+        cout << "\n";
         if (!comments.empty()) {  // display cmments if any exits
-            cout << "Comments:\n";
+            cout << "\nComments:\n";
             for (const auto &c : comments)
-                cout << " [" << c.first << "] - " << c.second << "\n";
+                cout << " [" << c.first << "] " << c.second << "\n";
         }
+        cout << "============================================================\n";
     }
 
 private:  // escape pipe character to avoid conflict with delimeter
@@ -218,6 +232,12 @@ private:  // escape pipe character to avoid conflict with delimeter
         }
         return out;
     }
+
+    // helper used by the summary view to truncate and keep a clean preview
+    static string preview(const string &s, size_t maxLen) {
+        if (s.size() <= maxLen) return s;
+        return s.substr(0, maxLen - 3) + "...";
+    }
 };
 
 
@@ -229,7 +249,7 @@ public:
     Person() = default;   // default constructor
     Person(const string &u, const string &b) : username(u), bio(b) {}
     virtual ~Person() = default;  // virtual destructor for polymorphism
-    
+
     virtual void showProfile() const {  //  virtual function for displaying profile , can be overridden
         cout << " username: " << username << "\n";
         cout << " bio: " << bio << "\n";
@@ -254,56 +274,56 @@ public:
         last_login_ts = "";  // no login yet
     }
     //  check if provided password matches stored hash
-    bool checkPassword(const string &p) const { 
-        return password == hashPassword(p); 
+    bool checkPassword(const string &p) const {
+        return password == hashPassword(p);
     }
     const vector<int> &getPosts() const {
-         return posts; 
-        }
+        return posts;
+    }
     const vector<string> &getFollowers() const {
-         return followers;
-        }
+        return followers;
+    }
     const vector<string> &getFollowing() const {
-         return following; 
-        }
+        return following;
+    }
     string getCreatedTS() const {
-         return created_ts; 
-        }
+        return created_ts;
+    }
     string getLastLoginTS() const {
-         return last_login_ts; 
-        }
+        return last_login_ts;
+    }
 //  update last login time to current
     void setLastLoginNow() {
-         last_login_ts = getCurrentTimestamp(); 
-        }
+        last_login_ts = getCurrentTimestamp();
+    }
     void addPostId(int pid) {
-         posts.push_back(pid); 
-        }
+        posts.push_back(pid);
+    }
     void removePostId(int pid) {
-         posts.erase(remove(posts.begin(), posts.end(), pid), posts.end()); 
-        }
+        posts.erase(remove(posts.begin(), posts.end(), pid), posts.end());
+    }
     void addFollower(const string &f) {
-        if (find(followers.begin(), followers.end(), f) == followers.end()) followers.push_back(f); 
+        if (find(followers.begin(), followers.end(), f) == followers.end()) followers.push_back(f);
     }
     void removeFollower(const string &f) {
-        followers.erase(remove(followers.begin(), followers.end(), f), followers.end()); 
+        followers.erase(remove(followers.begin(), followers.end(), f), followers.end());
     }
     void addFollowing(const string &f) {        // manage follwing list ( avoid duplicats)
-        if (find(following.begin(), following.end(), f) == following.end()) following.push_back(f); 
+        if (find(following.begin(), following.end(), f) == following.end()) following.push_back(f);
     }
     void removeFollowing(const string &f){
-         following.erase(remove(following.begin(), following.end(), f), following.end()); 
+        following.erase(remove(following.begin(), following.end(), f), following.end());
     }
     //  update bio
     void setBio(const string &b) {
-         bio = b; 
-        }
+        bio = b;
+    }
 
         // override showprofile to display user-specific information
-    void showProfile() const override {  
+    void showProfile() const override {
         cout << " username: " << username << "\n";
         cout << " bio: " << bio << "\n";
-        cout << " followers: " << followers.size() << " | following: " 
+        cout << " followers: " << followers.size() << " | following: "
         << following.size() << "\n";
 
         cout << " posts: " << posts.size() << "\n";
@@ -314,14 +334,14 @@ public:
 
     string serialize() const {
         string out = escapePipes(username) + "|" +
-         escapePipes(password) + "|" + 
+         escapePipes(password) + "|" +
          escapePipes(bio) + "|";
                                     //  serialize post id as comman seperated list
         for (int pid : posts) out += to_string(pid) + ",";
-        out += "|"; 
+        out += "|";
                         //  serialize followers as comman seperated list
         for (const auto &f : followers) out += escapePipes(f) + ",";
-        out += "|";  
+        out += "|";
             //  serialize followers as comman seperate list
         for (const auto &f : following) out += escapePipes(f) + ",";
 
@@ -341,8 +361,8 @@ public:
         if (!parts[3].empty()) {
             for (const auto &x : split(parts[3], ","))
                 if (!x.empty()) try {
-                     u.posts.push_back(stoi(x)); 
-                    } 
+                     u.posts.push_back(stoi(x));
+                    }
                     catch (...) {}
         }
 
@@ -402,7 +422,7 @@ public:
 
     void loadAll() {        // load all data from files
         users.clear(); posts.clear(); postCounter = 1;
-        for (const auto &ln : FileHandler::loadLines(USERS_FILE)) 
+        for (const auto &ln : FileHandler::loadLines(USERS_FILE))
         users.push_back(User::parse(ln));
 
         for (const auto &ln : FileHandler::loadLines(POSTS_FILE)) {
@@ -420,12 +440,12 @@ public:
         getline(cin, uname);
 
         if (uname.empty()) {  // valid username
-             cout << "\n\tUsername cannot be empty.\n"; 
-             return; 
+             cout << "\n\tUsername cannot be empty.\n";
+             return;
             }
         if (findUserIndex(uname) != -1) {   // check if username already exits
              cout << "\n\tUsername already exists!\n";
-            return; 
+            return;
         }
 
 
@@ -444,19 +464,19 @@ public:
 
     int loginUser() {
         string uname;
-        cout << "\n\tEnter username: "; 
+        cout << "\n\tEnter username: ";
         cin >> uname;
         cout << "\n\tEnter password: ";
         string pass = maskPassword();
         int idx = findUserIndex(uname);
 
         if (idx == -1) {
-             cout << "\n\tUsername not found.\n"; 
-            return -1; 
+             cout << "\n\tUsername not found.\n";
+            return -1;
         }
         if (!users[idx].checkPassword(pass)) {
              cout << "\n\tWrong password.\n";
-            return -1; 
+            return -1;
         }
 
         users[idx].setLastLoginNow();  // update last login time
@@ -470,13 +490,14 @@ public:
     }
 
     void createPost(int uid) {
+         clearScreen(); 
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
         string content;
         cout << "\n\tEnter post content: ";
         getline(cin, content);
         if (content.empty()) {
             cout << "\n\tPost content cannot be empty.\n";
-             return; 
+             return;
             }
             //  create new post with unique id
         posts.emplace_back(postCounter++, users[uid].getUsername(), content);
@@ -488,33 +509,53 @@ public:
         cin.get();
         clearScreen();
     }
+     int findUserPostByPosition(int uid, int position) const {
+        string currentUser = users[uid].getUsername();
+        vector<int> userPostIndices;
+        
+        // Find all indices of posts by this user
+        for (int i = 0; i < (int)posts.size(); ++i) {
+            if (posts[i].getAuthor() == currentUser) {
+                userPostIndices.push_back(i);
+            }
+        }
+            reverse(userPostIndices.begin(), userPostIndices.end());
+        
+        if (position < 1 || position > (int)userPostIndices.size()) {
+            return -1;
+        }
+        
+        // Return the actual index in posts vector
+        return userPostIndices[position - 1];
+    }
+        
 
     void editPost(int uid) {
         cout << "\n\tEnter post ID to edit: ";
         int pid;
         if (!(cin >> pid)) {
-            cin.clear(); 
+            cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
              cout << "\n\tInvalid input.\n";
-            return; 
+            return;
         }
 
         int pidx = findPostIndex(pid);  // find post  by id
         if (pidx == -1)
-            { cout << "\n\tPost not found.\n"; 
+            { cout << "\n\tPost not found.\n";
             return; }
             //  check authorization ( only author can  edit)
 
         if (posts[pidx].getAuthor() != users[uid].getUsername()) {
-             cout << "\n\tYou can't edit other's post.\n"; 
+             cout << "\n\tYou can't edit other's post.\n";
             return;
         }
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
         cout << "\n\tCurrent content:\n" << posts[pidx].getContent() << "\n";
         cout << "\n\tEnter new content: "; string nc; getline(cin, nc);
         if (nc.empty()) {
-            cout << "\n\tContent empty. Aborted.\n"; 
-            return; 
+            cout << "\n\tContent empty. Aborted.\n";
+            return;
         }
         //  update post content
         posts[pidx].setContent(nc);
@@ -529,43 +570,43 @@ public:
         cout << "\n\tEnter post ID to delete: ";
         int pid;
         if (!(cin >> pid)) {
-            cin.clear(); 
+            cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
             cout << "\n\tInvalid input.\n";
-            return; 
+            return;
         }
         // find post by id
         int pidx = findPostIndex(pid);
         if (pidx == -1) {
-             cout << "\n\tPost not found.\n"; 
-             return; 
+             cout << "\n\tPost not found.\n";
+             return;
             }
         if (posts[pidx].getAuthor() != users[uid].getUsername()) {
-             cout << "\n\tYou can't delete other's post.\n"; 
-            return; 
-        
+             cout << "\n\tYou can't delete other's post.\n";
+            return;
+
         }// remove the post from posts vector
         posts.erase(posts.begin() + pidx);
         users[uid].removePostId(pid);  // remove post id from users post list
         saveAll();
         cout << "\n\tPost deleted.\n";
         cout << "\n\tPress Enter to continue...";
-        cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
         cin.get();
         clearScreen();
     }
 
     void showNewsFeed() {
         if (posts.empty()) {
-             cout << "\n\tNo posts yet.\n"; 
-            return; 
+             cout << "\n\tNo posts yet.\n";
+            return;
         }
         cout << "\n\t Feed (Newest first) \n";
-                                                // display posts in reverse order 
+                                                // display posts in reverse order
         for (auto it = posts.rbegin(); it != posts.rend(); ++it)
          it->printSummary();
         cout << "\n\tPress Enter to continue...";
-        cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
         cin.get();
         clearScreen();
     }
@@ -574,15 +615,15 @@ public:
         int pid;
         cout << "Enter Post ID: ";
         if (!(cin >> pid)) {
-            cin.clear(); 
-            cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
-            cout << "Invalid input.\n"; 
-            return; 
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Invalid input.\n";
+            return;
         }
         int pidx = findPostIndex(pid);
         if (pidx == -1) {
-            cout << "Post not found.\n"; 
-            return; 
+            cout << "Post not found.\n";
+            return;
         }
 
         cout << "\n\t1.\n\t Like";
@@ -590,55 +631,55 @@ public:
         cout<<"\n\tenter choice";
         int choice;
         if (!(cin >> choice)) {
-            cin.clear(); 
-            cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
-            cout << "\n\tInvalid input.\n"; 
-            return; 
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "\n\tInvalid input.\n";
+            return;
         }
         if (choice == 1) {
             posts[pidx].addLike();
-            saveAll(); 
+            saveAll();
             cout << "Post liked.\n";
 
         } else if (choice == 2) {
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
             cout << "\n\tEnter comment: ";
-            string comment; 
+            string comment;
             getline(cin, comment);
             if (comment.empty()) {
-                cout << "\n\tComment cannot be empty.\n"; 
-                return; 
+                cout << "\n\tComment cannot be empty.\n";
+                return;
             }
-            posts[pidx].addComment(comment); 
-            saveAll(); 
+            posts[pidx].addComment(comment);
+            saveAll();
             cout << "\n\tComment added.\n";
         } else {
             cout << "Invalid choice.\n";
         }
 
         cout << "\n\tPress Enter to continue...";
-        cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
         cin.get();
         clearScreen();
     }
 
     void followUnfollow(int uid) {
         cout << "\n\tEnter username to follow/unfollow: ";
-        string target; 
+        string target;
         cin >> target;
         if (target == users[uid].getUsername()) {
-            cout << "\n\tCannot follow yourself.\n"; 
-            return; 
+            cout << "\n\tCannot follow yourself.\n";
+            return;
         }
         int idx = findUserIndex(target);
         if (idx == -1) {
-            cout << "User not found.\n"; 
-            return; 
+            cout << "User not found.\n";
+            return;
         }
         // check if already following
-        if (find(users[uid].getFollowing().begin(), 
-            users[uid].getFollowing().end(), 
-            target) != users[uid].getFollowing().end()) {  
+        if (find(users[uid].getFollowing().begin(),
+            users[uid].getFollowing().end(),
+            target) != users[uid].getFollowing().end()) {
                 //  unfollow : remove from following and unfollowing list
             users[uid].removeFollowing(target);
             users[idx].removeFollower(users[uid].getUsername());
@@ -664,7 +705,7 @@ public:
         for (const auto &f : users[uid].getFollowing())
          cout << " - " << f << "\n";
         cout << "\n\tPress Enter to continue...";
-        cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
         cin.get();
         clearScreen();
     }
@@ -674,10 +715,10 @@ public:
         cout<< "\n\t2. view my profile \n";
         cout<<"\n\tenter choice:\n";
         int choice; if (!(cin >> choice)) {
-             cin.clear(); 
-             cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
-             cout << "Invalid input.\n"; 
-             return; 
+             cin.clear();
+             cin.ignore(numeric_limits<streamsize>::max(), '\n');
+             cout << "Invalid input.\n";
+             return;
         }
         if (choice == 1) {
             cout << "Enter username to view: ";
@@ -685,8 +726,8 @@ public:
             cin >> target;
             int idx = findUserIndex(target);
             if (idx == -1) {
-                cout << "User not found.\n"; 
-                return; 
+                cout << "User not found.\n";
+                return;
             }
             users[idx].showProfile();
             cout << "Posts:\n";
@@ -694,7 +735,7 @@ public:
                 int pidx = findPostIndex(pid);
                 if (pidx != -1) posts[pidx].printSummary();
             }
-        } 
+        }
         else if (choice == 2) {
             users[uid].showProfile();
             cout << "Your posts:\n";
@@ -702,7 +743,7 @@ public:
                 int pidx = findPostIndex(pid);
                 if (pidx != -1) posts[pidx].printSummary();
             }
-        } 
+        }
         else {
             cout << "Invalid choice.\n";
         }
@@ -714,15 +755,15 @@ public:
 
     void searchUsers() {
         cout << "\t\tEnter search keyword: ";
-        string key; 
+        string key;
         cin >> key;
         cout << "Matching users:\n";
-        for (const auto &u : users) 
+        for (const auto &u : users)
             if (u.getUsername().find(key) != string::npos)
             cout << " - " << u.getUsername() << "\n";
 
         cout << "\n\tPress Enter to continue...";
-        cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
         cin.get();
         clearScreen();
     }
@@ -762,28 +803,28 @@ public:
                 ch = -1;
             }
             switch (ch) {
-                case 1: 
+                case 1:
                 createPost(uid);
                  break;
                 case 2:
-                 editPost(uid); 
+                 editPost(uid);
                 break;
                 case 3:
-                 deletePost(uid); 
+                 deletePost(uid);
                  break;
                 case 4:
-                 showNewsFeed(); 
+                 showNewsFeed();
                 break;
                 case 5:
                  likeOrComment(uid);
                   break;
-                case 6: 
+                case 6:
                 followUnfollow(uid);
                  break;
                 case 7:
                  showFollowersFollowing(uid);
                   break;
-                case 8: 
+                case 8:
                 viewProfileAny(uid);
                  break;
                 case 9:
@@ -791,7 +832,7 @@ public:
                   break;
                 case 0:
                  cout << "Logging out...\n";
-                  clearScreen(); 
+                  clearScreen();
                   break;
                 default:
                  cout << "Invalid choice. Try again.\n";
@@ -807,15 +848,15 @@ public:
         while ((ch = _getch()), ch != 13) {   // 13 =enter key
             if (ch == 8 || ch == 127) {         // 8= backspace 127=delet
                 if (!pass.empty())              // remove last character
-                 { pass.pop_back(); 
+                 { pass.pop_back();
                     cout << "\b \b"; }      // erase astrcick from screen
-            } 
+            }
             else if (ch == 0 || ch == 224) { _getch(); }
             else { pass.push_back((char)ch); cout << '*'; }
         }
         cout << "\n";
 
-    #else  
+    #else
     // linux
         struct termios oldt, newt;
         if (tcgetattr(STDIN_FILENO, &oldt) == 0) {
@@ -859,7 +900,7 @@ int main() {
              cout << "Exiting... Goodbye!\n";
               break;
             default:
-             cout << "\n\tInvalid choice. Try again.\n"; 
+             cout << "\n\tInvalid choice. Try again.\n";
              break;
         }
     } while (choice != 3);
