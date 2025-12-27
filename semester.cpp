@@ -528,7 +528,35 @@ public:
         // Return the actual index in posts vector
         return userPostIndices[position - 1];
     }
+      
+    
+    // Helper function to show user's own posts
+    void displayUserPosts(int uid) const {
+        string currentUser = users[uid].getUsername();
+        vector<int> userPostIndices;
         
+        // Find all indices of posts by this user
+        for (int i = 0; i < (int)posts.size(); ++i) {
+            if (posts[i].getAuthor() == currentUser) {
+                userPostIndices.push_back(i);
+            }
+        }
+        
+        if (userPostIndices.empty()) {
+            cout << "\tYou have no posts.\n";
+            return;
+        }
+         
+        // Display newest first
+        reverse(userPostIndices.begin(), userPostIndices.end());
+        
+        cout << "\n\t=== Your Posts ===\n";
+        for (int i = 0; i < (int)userPostIndices.size(); ++i) {
+            int postIdx = userPostIndices[i];
+            cout << "\tPost " << (i + 1) << ":\n";
+            posts[postIdx].printSummary();
+        }
+    }
 
     void editPost(int uid) {
         cout << "\n\tEnter post ID to edit: ";
