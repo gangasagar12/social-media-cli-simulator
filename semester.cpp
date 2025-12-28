@@ -557,39 +557,77 @@ public:
             posts[postIdx].printSummary();
         }
     }
+    // Helper function to show all posts in feed (public)
+       void displayAllPosts() const {
+        if (posts.empty()) {
+            cout << "\n\tNo posts available.\n";
+            return;
+        }
+        
+        cout << "\n\t======= Feed ======\n";
+        // display posts in reverse order (newest first)
+        for (auto it = posts.rbegin(); it != posts.rend(); ++it)
+            it->printSummary();
+        cout << "\n\tTotal posts: " << posts.size() << "\n";
+    }
 
+
+ 
     void editPost(int uid) {
-        cout << "\n\tEnter post ID to edit: ";
-        int pid;
-        if (!(cin >> pid)) {
-            cin.clear();
+          clearScreen();
+        // First show user's own posts
+        displayUserPosts(uid);
+        string currentUser = users[uid].getUsername();
+        vector<int> userPostIndices;
+        
+        // Count user's posts
+        for (int i = 0; i < (int)posts.size(); ++i) {
+            if (posts[i].getAuthor() == currentUser) {
+                userPostIndices.push_back(i);
+            }
+        }
+        
+        if (userPostIndices.empty()) {
+            cout << "\tYou have no posts to edit.\n";
+            cout << "\tPress Enter to continue...";
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
-             cout << "\n\tInvalid input.\n";
+            cin.get();
+            clearScreen();
             return;
         }
-
-        int pidx = findPostIndex(pid);  // find post  by id
-        if (pidx == -1)
-            { cout << "\n\tPost not found.\n";
-            return; }
-            //  check authorization ( only author can  edit)
-
-        if (posts[pidx].getAuthor() != users[uid].getUsername()) {
-             cout << "\n\tYou can't edit other's post.\n";
-            return;
+        
+        int totalUserPosts = userPostIndices.size();
+        cout << "\n\tEnter post number to edit (" << totalUserPosts << "): ";
+        int postNum;
+        if (!(cin >> postNum)) {
+            cin.clear(); 
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "\tInvalid input.\n";
+            return; 
         }
+
+        int pidx = findUserPostByPosition(uid, postNum);
+        if (pidx == -1) {
+            cout << "\tInvalid post number. Please enter a number between 1 and " << totalUserPosts << ".\n"; 
+            return; 
+        }
+        clearScreen();
+        
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        cout << "\n\tCurrent content:\n" << posts[pidx].getContent() << "\n";
-        cout << "\n\tEnter new content: "; string nc; getline(cin, nc);
+        cout << "\tCurrent content of Post " << postNum << ":\n";
+        posts[pidx].printFull();
+        cout << "\tEnter new content: "; 
+        string nc; 
+        getline(cin, nc);
         if (nc.empty()) {
-            cout << "\n\tContent empty. Aborted.\n";
-            return;
+            cout << "\tContent empty. Aborted.\n"; 
+            return; 
         }
-        //  update post content
+        // update post content
         posts[pidx].setContent(nc);
         saveAll();
-        cout << "\n\tPost updated.\n";
-        cout << "\n\tPress Enter to continue...";
+        cout << "\tPost " << postNum << " updated.\n";
+        cout << "\tPress Enter to continue...";
         cin.get();
         clearScreen();
     }
