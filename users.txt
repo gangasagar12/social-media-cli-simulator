@@ -1,2 +1,0 @@
-mahesh|1234|nothing doing yet||chandra,|
-chandra|12|he is a developer|||mahesh,
