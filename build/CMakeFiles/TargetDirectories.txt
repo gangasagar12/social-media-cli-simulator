@@ -1,0 +1,3 @@
+C:/Users/Chandra kant joshi/Desktop/gangasagarjoshi/socialmedia/build/CMakeFiles/SocialShell.dir
+C:/Users/Chandra kant joshi/Desktop/gangasagarjoshi/socialmedia/build/CMakeFiles/edit_cache.dir
+C:/Users/Chandra kant joshi/Desktop/gangasagarjoshi/socialmedia/build/CMakeFiles/rebuild_cache.dir
