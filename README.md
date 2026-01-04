@@ -42,7 +42,21 @@ To mimic the some features of popular social platforms (like posting, following,
 ### Build Instructions (Structured Project Mode)
 
 1. Clone or download the repository:
+2. Open a terminal and navigate to the project directory.
+3. Create a build directory and compile the project:
 
 ```bash
-git clone https://github.com/gangasagar12/social-media-cli-simulator.git
-cd social-media-cli-simulator
+mkdir build
+cd build
+cmake ..
+cmake --build .
+---
+## Running the application
+after the sucessfully built  you can run application from the built directory
+### On window
+```bash
+.\Socialmedia.exe
+---
+## On lunux/macOS
+./Socialmedia
+
