@@ -22,3 +22,12 @@ To mimic the some features of popular social platforms (like posting, following,
 | **Object-Oriented Design** | Clean OOP structure using classes, inheritance, encapsulation, and polymorphism. |
 | **Menu-Driven Interface** | Simple, intuitive, text-based menu system for easy navigation and usability. |
 | **Automatic Data Saving** | Data is saved automatically on application exit using destructors. |
+
+## 🛠 Technologies Used
+
+- **Language:** C++
+- **Paradigm:** Object-Oriented Programming (OOP)
+- **File Handling:** Binary files (`.bin`)
+- **Standard Libraries:** STL (vector, string, algorithm, functional, fstream)
+- **Platform APIs:** Windows (`conio.h`), Linux (`termios.h`)
+
