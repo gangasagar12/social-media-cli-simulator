@@ -31,3 +31,18 @@ To mimic the some features of popular social platforms (like posting, following,
 - **Standard Libraries:** STL (vector, string, algorithm, functional, fstream)
 - **Platform APIs:** Windows (`conio.h`), Linux (`termios.h`)
 
+## 🛠 Installation & Usage Guide
+
+### Prerequisites
+- **C++ Compiler:** A C++17 compatible compiler (e.g., GCC, Clang, MSVC)  
+- **CMake:** Version 3.16 or higher  
+
+---
+
+### Build Instructions (Structured Project Mode)
+
+1. Clone or download the repository:
+
+```bash
+git clone https://github.com/gangasagar12/social-media-cli-simulator.git
+cd social-media-cli-simulator
