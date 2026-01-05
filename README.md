@@ -49,6 +49,7 @@ cd build
 cmake ..
 cmake --build .
 ```
+---
 ### Running the Applications
 After a successful build, you can run the application from the build directory:
 On windows:
@@ -60,6 +61,8 @@ On windows:
 ./socialmedia
 
 ```
+---
+### Note : I also provided the single file of the project . You can also run project with single file (i.e semester.cpp)
 ---
 ## Demo
 ### Login Screen
